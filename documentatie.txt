@@ -1,0 +1,21 @@
+/login moet nog meer onderzoek over doen
+
+!!!AUTH!!!
+GET /search 
+allemaal optioneel maar er moet er wel eentje zijn, mogen er meer zijn.
+- b (behandeling)
+- m (medicatie)
+- k (klacht (array))
+- g (geslacht)
+- l (leeftijd)
+- r (resultaat)
+--> JSON array met dossier ID's
+
+!!!AUTH!!!
+GET /dossier/{ID}
+--> JSON met bmkglr
+
+!!!AUTH!!!
+POST /dossier/
+<-- JSON met bmkglr
+--> ID
