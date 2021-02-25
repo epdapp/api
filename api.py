@@ -7,7 +7,7 @@ DATABASE = "database.db"
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
-def executeQuery(query, to_filter):
+def executeQueryId(query, to_filter):
 	id = -1
 	with sqlite3.connect(DATABASE) as con:
 		cur = con.cursor()
@@ -16,6 +16,22 @@ def executeQuery(query, to_filter):
 		con.commit()
 	return id
 
+def executeQueryResult(query, to_filter):
+	result = []
+
+	with sqlite3.connect(DATABASE) as con:
+		con.row_factory = dict_factory
+		cur = con.cursor()
+		result = cur.execute(query, to_filter).fetchall()
+		con.commit()
+
+	return result
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 @app.route('/dossiers/', methods=['POST'])
 def new_dossier():
@@ -29,19 +45,32 @@ def new_dossier():
 	sex = dossier_data.get('g', None)
 
 	#create the dossier record
-	dossierId = executeQuery("INSERT INTO Dossiers (Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?);", [sex, age, result, treatment]) 
+	dossierId = executeQueryId("INSERT INTO Dossiers (Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?);", [sex, age, result, treatment]) 
 
 	#create the medication rows
 	for medication in medications:
-		executeQuery("INSERT INTO MedicatieRegel (DossierId, Medicatie) VALUES (?, ?)", [dossierId, medication])
+		executeQueryId("INSERT INTO MedicatieRegel (DossierId, Medicatie) VALUES (?, ?)", [dossierId, medication])
 
 	#creat the complaints rows
 	for complaint in complaints:
-		executeQuery("INSERT INTO KlachtRegel (DossierId, Klacht) VALUES (?, ?)", [dossierId, complaint])
+		executeQueryId("INSERT INTO KlachtRegel (DossierId, Klacht) VALUES (?, ?)", [dossierId, complaint])
 
 	return str(dossierId)
 
 
+@app.route('/dossiers/<dossierId>', methods=['GET'])
+def get_dossier(dossierId):
+	try:
+		dossier = executeQueryResult("SELECT * FROM dossiers WHERE dossierId=?;", [dossierId])[0]
+	except IndexError:
+		return jsonify({"error": "not found"})
 
+
+	medications = executeQueryResult("SELECT Medicatie FROM MedicatieRegel WHERE dossierId = ?;", [dossierId])
+	complaints = executeQueryResult("SELECT Klacht FROM KlachtRegel WHERE dossierId = ?;", [dossierId])
+
+	dossier.update({"m": medications, "k": complaints})
+
+	return str(dossier)
 
 app.run()
