@@ -3,8 +3,6 @@ CREATE TABLE [Dossiers] (
 	[Geslacht] INTEGER NULL,
 	[Leeftijd] INTEGER NULL,
 	[Resultaat] INTEGER NULL,
-	[KlachtRegelId] INTEGER NULL,
-	[MedicatieRegelId] INTEGER NULL,
 	[Behandeling] LONGTEXT NULL
 );
 
