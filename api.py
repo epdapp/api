@@ -15,7 +15,6 @@ load_dotenv()
 
 #app config
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True
 app.config["DEBUG"] = os.getenv("DEBUG")
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
