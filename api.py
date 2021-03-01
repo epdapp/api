@@ -1,11 +1,41 @@
 import flask
-from flask import request, jsonify
+from flask import request, jsonify, url_for, session
+from authlib.integrations.flask_client import OAuth
+import os
+from datetime import timedelta
 import sqlite3
+
+from auth_decorator import login_required
 
 DATABASE = "database.db"
 
+#dotenv setup
+from dotenv import load_dotenv
+load_dotenv()
+
+#app config
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
+app.config["DEBUG"] = os.getenv("DEBUG")
+app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
+app.secret_key = os.getenv("APP_SECRET_KEY")
+
+
+# oAuth Setup
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',  # This is only needed if using openId to fetch user info
+    client_kwargs={'scope': 'openid email profile'},
+)
 
 def executeQueryId(query, to_filter):
 	id = -1
@@ -33,7 +63,27 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
+@app.route('/login')
+def login():
+    google = oauth.create_client('google')  # create the google oauth client
+    redirect_uri = url_for('authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/authorize')
+def authorize():
+    google = oauth.create_client('google')  # create the google oauth client
+    token = google.authorize_access_token()  # Access token from google (needed to get user info)
+    resp = google.get('userinfo')  # userinfo contains stuff u specificed in the scrope
+    user_info = resp.json()
+    user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
+    # Here you use the profile/user data that you got and query your database find/register the user
+    # and set ur own data in the session not the profile from google
+    session['profile'] = user_info
+    session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
+    return flask.redirect('/')
+
 @app.route('/dossiers/', methods=['POST'])
+@login_required
 def new_dossier():
 	dossier_data = request.get_json()
 
@@ -59,6 +109,7 @@ def new_dossier():
 
 
 @app.route('/dossiers/<dossierId>', methods=['GET'])
+@login_required
 def get_dossier(dossierId):
 	#Get the dossier record, if it does not exist error out.
 	try:
