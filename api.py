@@ -60,17 +60,25 @@ def new_dossier():
 
 @app.route('/dossiers/<dossierId>', methods=['GET'])
 def get_dossier(dossierId):
+	#Get the dossier record, if it does not exist error out.
 	try:
 		dossier = executeQueryResult("SELECT * FROM dossiers WHERE dossierId=?;", [dossierId])[0]
 	except IndexError:
 		return jsonify({"error": "not found"})
 
+	#Get the medication and complaints record and convert them from an array to an dictionary. 
+	medications = []
+	for medication in executeQueryResult("SELECT Medicatie FROM MedicatieRegel WHERE dossierId = ?;", [dossierId]):
+		medications.append(medication.get("Medicatie"))
 
-	medications = executeQueryResult("SELECT Medicatie FROM MedicatieRegel WHERE dossierId = ?;", [dossierId])
-	complaints = executeQueryResult("SELECT Klacht FROM KlachtRegel WHERE dossierId = ?;", [dossierId])
+	complaints = []
+	for complaint in executeQueryResult("SELECT Klacht FROM KlachtRegel WHERE dossierId = ?;", [dossierId]):
+		complaints.append(complaint.get("Klacht"))
 
+	#Add the medications and the complaints to the dossier
 	dossier.update({"m": medications, "k": complaints})
 
+	#return the dossier
 	return str(dossier)
 
 app.run()
