@@ -137,4 +137,110 @@ def get_dossier(dossierId):
 	#return the dossier
 	return str(dossier)
 
+@app.route('/search')
+@login_required
+def search():
+	behandeling = request.args.get('b')
+	medicatie = request.args.get('m')
+	klacht = request.args.get('k')
+	geslacht = request.args.get('g')
+	leeftijd = request.args.get('l')
+	resultaat = request.args.get('r')
+
+	result = set()
+
+	if (behandeling):
+		keywords = behandeling.split()
+
+		for keyword in keywords:
+			keyword = f"%{keyword}%"
+
+			searchResults = executeQueryResult("SELECT dossierid FROM dossiers WHERE behandeling LIKE ?;", [keyword])
+
+			for searchResult in searchResults:
+				result.add(searchResult.get('DossierId'))
+
+		# results = executeQueryResult("SELECT dossierid FROM dossiers WHERE behandeling LIKE '%?%';", [keyword])
+
+	if (medicatie):
+		keywords = medicatie.split(";")
+
+		for keyword in keywords:
+			searchResults = executeQueryResult("SELECT DossierId FROM MedicatieRegel WHERE Medicatie LIKE ?", [keyword])
+			keyResultSet = set()
+
+			for searchResult in searchResults:
+				keyResultSet.add(searchResult.get('DossierId'))
+			
+			if result:
+				result = keyResultSet.intersection(result)
+			else:
+				result = keyResultSet
+
+	if (klacht):
+		keywords = medicatie.split(";")
+
+		for keyword in keywords:
+			searchResults = executeQueryResult("SELECT DossierId FROM KlachtRegel WHERE Medicatie LIKE ?", [keyword])
+			keyResultSet = set()
+
+			for searchResult in searchResults:
+				keyResultSet.add(searchResult.get('DossierId'))
+			
+			if result:
+				result = keyResultSet.intersection(result)
+			else:
+				result = keyResultSet
+
+	if (geslacht):
+		searchResults = executeQueryResult("SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [geslacht])
+		searchResultSet = set()
+
+		for searchResult in searchResults:
+			searchResultSet.add(searchResult.get('DossierId'))
+		
+		if result:
+			result = keyResultSet.intersection(result)
+		else:
+			result = keyResultSet
+
+	if (geslacht):
+		searchResults = executeQueryResult("SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [geslacht])
+		searchResultSet = set()
+
+		for searchResult in searchResults:
+			searchResultSet.add(searchResult.get('DossierId'))
+		
+		if result:
+			result = keyResultSet.intersection(result)
+		else:
+			result = keyResultSet
+
+	if (leeftijd):
+		searchResults = executeQueryResult("SELECT DossierId FROM Dossiers WHERE leeftijd = ?", [leeftijd])
+		searchResultSet = set()
+
+		for searchResult in searchResults:
+			searchResultSet.add(searchResult.get('DossierId'))
+		
+		if result:
+			result = keyResultSet.intersection(result)
+		else:
+			result = keyResultSet
+
+	if (resultaat):
+		searchResults = executeQueryResult("SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [resultaat])
+		searchResultSet = set()
+
+		for searchResult in searchResults:
+			searchResultSet.add(searchResult.get('DossierId'))
+		
+		if result:
+			result = keyResultSet.intersection(result)
+		else:
+			result = keyResultSet
+
+
+	return jsonify(list(result))
+
 app.run()
