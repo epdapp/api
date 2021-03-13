@@ -4,6 +4,7 @@ from authlib.integrations.flask_client import OAuth
 import os
 from datetime import timedelta
 import sqlite3
+import base64
 
 from auth_decorator import login_required
 
@@ -79,7 +80,12 @@ def authorize():
     # and set ur own data in the session not the profile from google
     session['profile'] = user_info
     session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
-    return flask.redirect('/')
+    return flask.redirect('/logedin')
+
+@app.route('/logedin')
+def logedin():
+	login = request.cookies.get(app.config['SESSION_COOKIE_NAME'])
+	return flask.redirect(f'magnet:?{base64.b64encode(login.encode()).decode()}')
 
 @app.route('/dossiers/', methods=['POST'])
 @login_required
