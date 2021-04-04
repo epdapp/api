@@ -1,5 +1,5 @@
 import flask
-from flask import request, jsonify, url_for, session
+from flask import request, jsonify, url_for, session, render_template
 from authlib.integrations.flask_client import OAuth
 import os
 from datetime import timedelta
@@ -85,7 +85,9 @@ def authorize():
 @app.route('/logedin')
 def logedin():
 	login = request.cookies.get(app.config['SESSION_COOKIE_NAME'])
-	return flask.redirect(f'edpapp:?{base64.b64encode(login.encode()).decode()}')
+
+	return render_template("open.html", href=f'edpapp:?{base64.b64encode(login.encode()).decode()}')
+	# return "Hello"
 
 @app.route('/dossiers/', methods=['POST'])
 @login_required
