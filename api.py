@@ -85,7 +85,7 @@ def authorize():
 @app.route('/logedin')
 def logedin():
 	login = request.cookies.get(app.config['SESSION_COOKIE_NAME'])
-	return flask.redirect(f'magnet:?{base64.b64encode(login.encode()).decode()}')
+	return flask.redirect(f'edpapp:?{base64.b64encode(login.encode()).decode()}')
 
 @app.route('/dossiers/', methods=['POST'])
 @login_required
