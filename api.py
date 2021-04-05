@@ -80,13 +80,13 @@ def authorize():
     # and set ur own data in the session not the profile from google
     session['profile'] = user_info
     session.permanent = True  # make the session permanant so it keeps existing after broweser gets closed
-    return flask.redirect('/logedin')
+    return flask.redirect('/loggedin')
 
-@app.route('/logedin')
-def logedin():
+@app.route('/loggedin')
+def loggedin():
 	login = request.cookies.get(app.config['SESSION_COOKIE_NAME'])
 
-	return render_template("open.html", href=f'edpapp:?{base64.b64encode(login.encode()).decode()}')
+	return render_template("open.html", href=f'epdapp:?{base64.b64encode(login.encode()).decode()}')
 	# return "Hello"
 
 @app.route('/dossiers/', methods=['POST'])
