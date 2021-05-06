@@ -94,6 +94,7 @@ def loggedin():
 def new_dossier():
 	dossier_data = request.get_json()
 
+	desease = dossier_data.get('z', None)
 	treatment = dossier_data.get('b', None)
 	medications = dossier_data.get('m', None)
 	complaints = dossier_data.get('k', None)
@@ -102,7 +103,7 @@ def new_dossier():
 	sex = dossier_data.get('g', None)
 
 	#create the dossier record
-	dossierId = executeQueryId("INSERT INTO Dossiers (Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?);", [sex, age, result, treatment]) 
+	dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?);", [desease, sex, age, result, treatment]) 
 
 	#create the medication rows
 	for medication in medications:
@@ -142,6 +143,7 @@ def get_dossier(dossierId):
 @app.route('/search')
 @login_required
 def search():
+	ziekte = request.args.get('z')
 	behandeling = request.args.get('b')
 	medicatie = request.args.get('m')
 	klacht = request.args.get('k')
@@ -150,6 +152,15 @@ def search():
 	resultaat = request.args.get('r')
 
 	result = set()
+
+	if (ziekte):
+		keyword = ziekte.split()
+
+		searchResults = executeQueryResult("SELECT dossierId FROM dossiers WHERE ziekte LIKE ?;", [keyword])
+
+		for searchResult in searchResults:
+			result.add(searchResult.get('DossierId'))
+
 
 	if (behandeling):
 		keywords = behandeling.split()

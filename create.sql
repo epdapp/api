@@ -1,5 +1,6 @@
 CREATE TABLE [Dossiers] (
 	[DossierId] INTEGER PRIMARY KEY NOT NULL,
+	[Ziekte] INTEGER NULL,
 	[Geslacht] INTEGER NULL,
 	[Leeftijd] INTEGER NULL,
 	[Resultaat] INTEGER NULL,
