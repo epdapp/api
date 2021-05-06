@@ -103,7 +103,7 @@ def new_dossier():
 	sex = dossier_data.get('g', None)
 
 	#create the dossier record
-	dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?);", [desease, sex, age, result, treatment]) 
+	dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?, ?);", [desease, sex, age, result, treatment]) 
 
 	#create the medication rows
 	for medication in medications:
