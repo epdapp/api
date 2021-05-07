@@ -115,9 +115,6 @@ def new_dossier():
 
 	return str(dossierId)
 
-
-@app.route('/dossiers/<dossierId>', methods=['GET'])
-@login_required
 def get_dossier(dossierId):
 	#Get the dossier record, if it does not exist error out.
 	try:
@@ -138,7 +135,39 @@ def get_dossier(dossierId):
 	dossier.update({"m": medications, "k": complaints})
 
 	#return the dossier
+	return dossier	
+
+
+@app.route('/dossiers/<dossierId>', methods=['GET'])
+@login_required
+def get_dossier_str(dossierId):
+	dossier = get_dossier(dossierId)
+
+	#return the dossier
 	return str(dossier)
+
+@app.route('/dossiers/all', methods=['GET'])
+@login_required
+def get_all_dosssiers():
+	ids = executeQueryResult('SELECT dossierid FROM dossiers', [])
+	# return jsonify(ids)
+	print(ids[1].get('DossierId'))
+
+	results = []
+	for id in ids:
+		results.append(get_dossier(id.get('DossierId')))
+	return jsonify(results)
+
+	# cur.execute('''SELECT * FROM dossiers''')
+	# row_headers = [x[0]
+	# 				for x in cur.description]  # this will extract row headers
+	# json_data = []
+	# myresult = cur.fetchall()
+	# for result in myresult:
+	# 	json_data.append(dict(zip(row_headers, result)))
+	# return jsonify(json_data)
+
+
 
 @app.route('/search')
 @login_required
