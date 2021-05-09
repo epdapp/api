@@ -1,5 +1,5 @@
 import flask
-from flask import request, jsonify, url_for, session, render_template
+from flask import request, jsonify, url_for, session, render_template, Response
 from authlib.integrations.flask_client import OAuth
 import os
 from datetime import timedelta
@@ -20,7 +20,6 @@ app.config["DEBUG"] = os.getenv("DEBUG")
 app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
 app.secret_key = os.getenv("APP_SECRET_KEY")
-
 
 # oAuth Setup
 oauth = OAuth(app)
@@ -156,8 +155,20 @@ def get_all_dosssiers():
 	results = []
 	for id in ids:
 		results.append(get_dossier(id.get('DossierId')))
-	return jsonify(results)
-
+	results = jsonify(results)
+	results.headers["Content-Type"] = "application/json; charset=utf-8"
+	results.headers["Access-Control-Allow-Origin"] = "*"
+	results.headers["Access-Control-Allow-Credentials"] = "true"
+	results.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
+	results.headers["Access-Control-Allow-Headers"] = "Acces-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Acces-Control-Request-Headers"
+	# results.setHeader("Access-Control-Allow-Origin", "*")
+	# results.setHeader("Access-Control-Allow-Credentials", "true")
+	# results.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT")
+	# results.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers")
+	return results
+	# r = Response(response=results, status=200, mimetype="application/json")
+	# r.headers["Content-Type"] = "application/json; charset=utf-8"
+	# return r
 	# cur.execute('''SELECT * FROM dossiers''')
 	# row_headers = [x[0]
 	# 				for x in cur.description]  # this will extract row headers
