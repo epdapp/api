@@ -146,11 +146,11 @@ def get_dossier_str(dossierId):
 	return str(dossier)
 
 @app.route('/dossiers/all', methods=['GET'])
-@login_required
+# @login_required
 def get_all_dosssiers():
 	ids = executeQueryResult('SELECT dossierid FROM dossiers', [])
 	# return jsonify(ids)
-	print(ids[1].get('DossierId'))
+	print(ids[0].get('DossierId'))
 
 	results = []
 	for id in ids:
