@@ -2,3 +2,4 @@ flask
 Authlib
 requests
 python-dotenv
+flask-cors
