@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from typing import Dict
 import flask
 from flask import request, jsonify, url_for, session, render_template, Response, Blueprint
 from authlib.integrations.flask_client import OAuth
@@ -8,10 +9,13 @@ import sqlite3
 import base64
 from auth_decorator import login_required
 import flask_cors
+from flask_cors import cross_origin
+import json
+from six.moves.urllib.request import urlopen
+from functools import wraps
+from jose import jwt
 
-DATABASE = "database.db"
-
-# dotenv setup
+# dotenv config
 load_dotenv()
 
 # app config
@@ -21,6 +25,165 @@ app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 cors = flask_cors.CORS(app, resources={r"*": {"origins": "*"}})
+
+
+# auth config
+AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
+API_IDENTIFIER = os.getenv("API_IDENTIFIER")
+ALGORITHMS = ["RS256"]
+
+
+# Format error response and append status code.
+class AuthError(Exception):
+    """
+    An AuthError is raised whenever the authentication failed.
+    """
+
+    def __init__(self, error: Dict[str, str], status_code: int):
+        super().__init__()
+        self.error = error
+        self.status_code = status_code
+
+
+@app.errorhandler(AuthError)
+def handle_auth_error(ex: AuthError) -> Response:
+    """
+    serializes the given AuthError as json and sets the response status code accordingly.
+    :param ex: an auth error
+    :return: json serialized ex response
+    """
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
+def get_token_auth_header() -> str:
+    """Obtains the access token from the Authorization Header
+    """
+    auth = request.headers.get("Authorization", None)
+    if not auth:
+        raise AuthError({"code": "authorization_header_missing",
+                         "description":
+                             "Authorization header is expected"}, 401)
+
+    parts = auth.split()
+
+    if parts[0].lower() != "bearer":
+        raise AuthError({"code": "invalid_header",
+                         "description":
+                         "Authorization header must start with"
+                         " Bearer"}, 401)
+    if len(parts) == 1:
+        raise AuthError({"code": "invalid_header",
+                         "description": "Token not found"}, 401)
+    if len(parts) > 2:
+        raise AuthError({"code": "invalid_header",
+                         "description":
+                             "Authorization header must be"
+                             " Bearer token"}, 401)
+
+    token = parts[1]
+    return token
+
+
+def requires_scope(required_scope: str) -> bool:
+    """Determines if the required scope is present in the access token
+    Args:
+        required_scope (str): The scope required to access the resource
+    """
+    token = get_token_auth_header()
+    unverified_claims = jwt.get_unverified_claims(token)
+    if unverified_claims.get("scope"):
+        token_scopes = unverified_claims["scope"].split()
+        for token_scope in token_scopes:
+            if token_scope == required_scope:
+                return True
+    return False
+
+
+def requires_auth(func):
+    """Determines if the access token is valid
+    """
+
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        token = get_token_auth_header()
+        jsonurl = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
+        jwks = json.loads(jsonurl.read())
+        try:
+            unverified_header = jwt.get_unverified_header(token)
+        except jwt.JWTError as jwt_error:
+            raise AuthError({"code": "invalid_header",
+                             "description":
+                             "Invalid header. "
+                             "Use an RS256 signed JWT Access Token"}, 401) from jwt_error
+        if unverified_header["alg"] == "HS256":
+            raise AuthError({"code": "invalid_header",
+                             "description":
+                                 "Invalid header. "
+                                 "Use an RS256 signed JWT Access Token"}, 401)
+        rsa_key = {}
+        for key in jwks["keys"]:
+            if key["kid"] == unverified_header["kid"]:
+                rsa_key = {
+                    "kty": key["kty"],
+                    "kid": key["kid"],
+                    "use": key["use"],
+                    "n": key["n"],
+                    "e": key["e"]
+                }
+        if rsa_key:
+            try:
+                payload = jwt.decode(
+                    token,
+                    rsa_key,
+                    algorithms=ALGORITHMS,
+                    audience=API_IDENTIFIER,
+                    issuer="https://" + AUTH0_DOMAIN + "/"
+                )
+            except jwt.ExpiredSignatureError as expired_sign_error:
+                raise AuthError({"code": "token_expired",
+                                 "description": "token is expired"}, 401) from expired_sign_error
+            except jwt.JWTClaimsError as jwt_claims_error:
+                raise AuthError({"code": "invalid_claims",
+                                 "description":
+                                 "incorrect claims,"
+                                 " please check the audience and issuer"}, 401) from jwt_claims_error
+            except Exception as exc:
+                raise AuthError({"code": "invalid_header",
+                                 "description":
+                                 "Unable to parse authentication"
+                                 " token."}, 401) from exc
+
+            _request_ctx_stack.top.current_user = payload
+            return func(*args, **kwargs)
+        raise AuthError({"code": "invalid_header",
+                         "description": "Unable to find appropriate key"}, 401)
+
+    return decorated
+
+# scopes
+
+
+def requires_scope(required_scope):
+    """Determines if the required scope is present in the Access Token
+    Args:
+        required_scope (str): The scope required to access the resource
+    """
+    token = get_token_auth_header()
+    unverified_claims = jwt.get_unverified_claims(token)
+    if unverified_claims.get("scope"):
+        token_scopes = unverified_claims["scope"].split()
+        for token_scope in token_scopes:
+            if token_scope == required_scope:
+                return True
+    return False
+
+
+DATABASE = "database.db"
+
+# dotenv setup
+
 
 # oAuth Setup
 oauth = OAuth(app)
@@ -68,14 +231,14 @@ def dict_factory(cursor, row):
     return d
 
 
-@app.route('/login')
+@ app.route('/login')
 def login():
     google = oauth.create_client('google')  # create the google oauth client
     redirect_uri = url_for('authorize', _external=True)
     return google.authorize_redirect(redirect_uri)
 
 
-@app.route('/authorize')
+@ app.route('/authorize')
 def authorize():
     google = oauth.create_client('google')  # create the google oauth client
     # Access token from google (needed to get user info)
@@ -92,7 +255,7 @@ def authorize():
     return flask.redirect('/loggedin')
 
 
-@app.route('/loggedin')
+@ app.route('/loggedin')
 def loggedin():
     login = request.cookies.get(app.config['SESSION_COOKIE_NAME'])
 
@@ -100,8 +263,10 @@ def loggedin():
     # return "Hello"
 
 
-@app.route('/dossiers/', methods=['POST'])
+@ app.route('/dossiers/', methods=['POST'])
 # @login_required
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
 def new_dossier():
     dossier_data = request.get_json()
 
@@ -115,7 +280,7 @@ def new_dossier():
 
     # create the dossier record
     dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?, ?);", [
-                               desease, sex, age, result, treatment])
+        desease, sex, age, result, treatment])
 
     # create the medication rows
     for medication in medications:
@@ -154,8 +319,10 @@ def get_dossier(dossierId):
     return dossier
 
 
-@app.route('/dossiers/<dossierId>', methods=['GET'])
+@ app.route('/dossiers/<dossierId>', methods=['GET'])
 # @login_required
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
 def get_dossier_str(dossierId):
     dossier = get_dossier(dossierId)
 
@@ -163,8 +330,10 @@ def get_dossier_str(dossierId):
     return jsonify(dossier)
 
 
-@app.route('/dossiers/all', methods=['GET'])
+@ app.route('/dossiers/all', methods=['GET'])
 # @login_required
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
 def get_all_dosssiers():
     ids = executeQueryResult('SELECT dossierid FROM dossiers', [])
     # return jsonify(ids)
@@ -197,8 +366,10 @@ def get_all_dosssiers():
     # return jsonify(json_data)
 
 
-@app.route('/search')
+@ app.route('/search')
 # @login_required
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
 def search():
     ziekte = request.args.get('z')
     behandeling = request.args.get('b')
