@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from typing import Dict
 import flask
-from flask import request, jsonify, url_for, session, render_template, Response, Blueprint
+from flask import request, jsonify, url_for, session, render_template, _request_ctx_stack, Response, Blueprint
 from authlib.integrations.flask_client import OAuth
 import os
 from datetime import timedelta
