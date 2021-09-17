@@ -319,6 +319,14 @@ def get_dossier(dossierId):
     return dossier
 
 
+def del_dossier(dossierId):
+    try:
+        dossierDel = executeQueryResult(
+            "DELETE FROM Dossiers WHERE dossierId = ?;", [dossierId])[0]
+    except IndexError:
+        return jsonify({"error": "not found"})
+
+
 @ app.route('/dossiers/<dossierId>', methods=['GET'])
 # @login_required
 @cross_origin(headers=["Content-Type", "Authorization"])
@@ -364,6 +372,13 @@ def get_all_dosssiers():
     # for result in myresult:
     # 	json_data.append(dict(zip(row_headers, result)))
     # return jsonify(json_data)
+
+
+@ app.route('/dossiers/del', methods=['DELETE'])
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
+def del_dossier_called(dossierId):
+    del_dossier(dossierId)
 
 
 @ app.route('/search')
