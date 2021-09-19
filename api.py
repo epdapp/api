@@ -320,9 +320,16 @@ def get_dossier(dossierId):
 
 
 def del_dossier(dossierId):
-    executeQueryResult(
-        "DELETE FROM Dossiers WHERE dossierId = ?;", [dossierId])[0]
-    return "Gelukt!"
+    try:
+        executeQueryResult(
+            "DELETE FROM Dossiers WHERE dossierId = ?;", [dossierId])
+        executeQueryResult(
+            "DELETE FROM KlachtRegel WHERE dossierId = ?;", [dossierId])
+        executeQueryResult(
+            "DELETE FROM MedicatieRegel WHERE dossierId = ?;", [dossierId])
+        return flask.Response("{'Dossier':'deleted'}", status=200, mimetype="application/json")
+    except IndexError:
+        return "Mislukt!"
 
 
 @ app.route('/dossiers/<dossierId>', methods=['GET'])
@@ -372,7 +379,7 @@ def get_all_dosssiers():
     # return jsonify(json_data)
 
 
-@ app.route(f'/dossiers/del/<dossierId>', methods=['DELETE'])
+@ app.route('/dossiers/del/<dossierId>', methods=['DELETE'])
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def del_dossier_called(dossierId):
