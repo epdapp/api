@@ -327,7 +327,6 @@ def del_dossier(dossierId):
             "DELETE FROM KlachtRegel WHERE dossierId = ?;", [dossierId])
         executeQueryResult(
             "DELETE FROM MedicatieRegel WHERE dossierId = ?;", [dossierId])
-        return flask.Response("{'Dossier':'deleted'}", status=200, mimetype="application/json")
     except IndexError:
         return "Mislukt!"
 
@@ -384,6 +383,7 @@ def get_all_dosssiers():
 @requires_auth
 def del_dossier_called(dossierId):
     del_dossier(dossierId)
+    return flask.Response(status=204)
 
 
 @ app.route('/search')
