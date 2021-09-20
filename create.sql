@@ -1,10 +1,10 @@
 CREATE TABLE [Dossiers] (
 	[DossierId] INTEGER PRIMARY KEY NOT NULL,
-	[Ziekte] INTEGER NULL,
-	[Geslacht] INTEGER NULL,
-	[Leeftijd] INTEGER NULL,
-	[Resultaat] INTEGER NULL,
-	[Behandeling] LONGTEXT NULL
+	[Ziekte] TEXT NULL,
+	[Geslacht] TEXT NULL,
+	[Leeftijd] TEXT NULL,
+	[Resultaat] TEXT NULL,
+	[Behandeling] TEXT NULL
 );
 
 CREATE TABLE [KlachtRegel] (
