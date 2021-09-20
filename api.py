@@ -347,7 +347,7 @@ def get_dossier_str(dossierId):
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def get_all_dosssiers():
-    ids = executeQueryResult('SELECT dossierid FROM dossiers', [])
+    ids = executeQueryResult('SELECT dossierid FROM dossiers ORDER BY DossierId desc', [])
     # return jsonify(ids)
     print(ids[0].get('DossierId'))
 
