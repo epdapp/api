@@ -1,3 +1,4 @@
+from types import MethodDescriptorType
 from dotenv import load_dotenv
 from typing import Dict
 import flask
@@ -386,7 +387,7 @@ def del_dossier_called(dossierId):
     return flask.Response(status=204)
 
 
-@ app.route('/search')
+@ app.route('/dossiers/search', methods=['GET'])
 # @login_required
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
@@ -402,7 +403,7 @@ def search():
     result = set()
 
     if (ziekte):
-        keyword = ziekte.split()
+        keyword = f"%{ziekte}%"
 
         searchResults = executeQueryResult(
             "SELECT dossierId FROM dossiers WHERE ziekte LIKE ?;", [keyword])
@@ -465,9 +466,9 @@ def search():
             searchResultSet.add(searchResult.get('DossierId'))
 
         if result:
-            result = keyResultSet.intersection(result)
+            result = searchResultSet.intersection(result)
         else:
-            result = keyResultSet
+            result = searchResultSet
 
     if (geslacht):
         searchResults = executeQueryResult(
@@ -478,9 +479,9 @@ def search():
             searchResultSet.add(searchResult.get('DossierId'))
 
         if result:
-            result = keyResultSet.intersection(result)
+            result = searchResultSet.intersection(result)
         else:
-            result = keyResultSet
+            result = searchResultSet
 
     if (leeftijd):
         searchResults = executeQueryResult(
@@ -491,9 +492,9 @@ def search():
             searchResultSet.add(searchResult.get('DossierId'))
 
         if result:
-            result = keyResultSet.intersection(result)
+            result = searchResultSet.intersection(result)
         else:
-            result = keyResultSet
+            result = searchResultSet
 
     if (resultaat):
         searchResults = executeQueryResult(
@@ -504,9 +505,9 @@ def search():
             searchResultSet.add(searchResult.get('DossierId'))
 
         if result:
-            result = keyResultSet.intersection(result)
+            result = searchResultSet.intersection(result)
         else:
-            result = keyResultSet
+            result = searchResultSet
 
     return jsonify(list(result))
 
