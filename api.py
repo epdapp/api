@@ -348,7 +348,8 @@ def get_dossier_str(dossierId):
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def get_all_dosssiers():
-    ids = executeQueryResult('SELECT dossierid FROM dossiers ORDER BY DossierId desc', [])
+    ids = executeQueryResult(
+        'SELECT dossierid FROM dossiers ORDER BY DossierId desc', [])
 
     print(ids[0].get('DossierId'))
 
@@ -389,7 +390,7 @@ def search():
         ids = executeQueryResult(
             "SELECT dossierId FROM dossiers WHERE ziekte LIKE ?;", [keyword])
 
-        results =[]
+        results = []
 
         for id in ids:
             results.append(get_dossier(id.get("DossierId")))
@@ -402,11 +403,16 @@ def search():
         for keyword in keywords:
             keyword = f"%{keyword}%"
 
-            searchResults = executeQueryResult(
+            ids = executeQueryResult(
                 "SELECT dossierid FROM dossiers WHERE behandeling LIKE ?;", [keyword])
 
-            for searchResult in searchResults:
-                result.add(searchResult.get('DossierId'))
+            results = []
+
+            for id in ids:
+                results.append(get_dossier(id.get("DossierId")))
+            results = jsonify(results)
+
+            return results
 
         # results = executeQueryResult("SELECT dossierid FROM dossiers WHERE behandeling LIKE '%?%';", [keyword])
 
@@ -414,87 +420,75 @@ def search():
         keywords = medicatie.split(";")
 
         for keyword in keywords:
-            searchResults = executeQueryResult(
+
+            ids = executeQueryResult(
                 "SELECT DossierId FROM MedicatieRegel WHERE Medicatie LIKE ?", [keyword])
-            keyResultSet = set()
 
-            for searchResult in searchResults:
-                keyResultSet.add(searchResult.get('DossierId'))
+            results = []
 
-            if result:
-                result = keyResultSet.intersection(result)
-            else:
-                result = keyResultSet
+            for id in ids:
+                results.append(get_dossier(id.get("DossierId")))
+            results = jsonify(results)
+
+            return results
 
     if (klacht):
-        keywords = medicatie.split(";")
+        keywords = klacht.split(";")
 
         for keyword in keywords:
-            searchResults = executeQueryResult(
-                "SELECT DossierId FROM KlachtRegel WHERE Medicatie LIKE ?", [keyword])
-            keyResultSet = set()
 
-            for searchResult in searchResults:
-                keyResultSet.add(searchResult.get('DossierId'))
+            ids = executeQueryResult(
+                "SELECT DossierId FROM KlachtRegel WHERE Klacht LIKE ?", [keyword])
 
-            if result:
-                result = keyResultSet.intersection(result)
-            else:
-                result = keyResultSet
+            results = []
 
-    if (geslacht):
-        searchResults = executeQueryResult(
-            "SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [geslacht])
-        searchResultSet = set()
+            for id in ids:
+                results.append(get_dossier(id.get("DossierId")))
+            results = jsonify(results)
 
-        for searchResult in searchResults:
-            searchResultSet.add(searchResult.get('DossierId'))
-
-        if result:
-            result = searchResultSet.intersection(result)
-        else:
-            result = searchResultSet
+            return results
 
     if (geslacht):
-        searchResults = executeQueryResult(
+
+        ids = executeQueryResult(
             "SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [geslacht])
-        searchResultSet = set()
 
-        for searchResult in searchResults:
-            searchResultSet.add(searchResult.get('DossierId'))
+        results = []
 
-        if result:
-            result = searchResultSet.intersection(result)
-        else:
-            result = searchResultSet
+        for id in ids:
+            results.append(get_dossier(id.get("DossierId")))
+        results = jsonify(results)
+
+        return results
 
     if (leeftijd):
-        searchResults = executeQueryResult(
+        ids = executeQueryResult(
             "SELECT DossierId FROM Dossiers WHERE leeftijd = ?", [leeftijd])
-        searchResultSet = set()
 
-        for searchResult in searchResults:
-            searchResultSet.add(searchResult.get('DossierId'))
+        results = []
 
-        if result:
-            result = searchResultSet.intersection(result)
-        else:
-            result = searchResultSet
+        for id in ids:
+            results.append(get_dossier(id.get("DossierId")))
+        results = jsonify(results)
+
+        return results
 
     if (resultaat):
-        searchResults = executeQueryResult(
-            "SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [resultaat])
-        searchResultSet = set()
+        keywords = resultaat.split()
 
-        for searchResult in searchResults:
-            searchResultSet.add(searchResult.get('DossierId'))
+        for keyword in keywords:
+            keyword = f"%{keyword}%"
 
-        if result:
-            result = searchResultSet.intersection(result)
-        else:
-            result = searchResultSet
+        ids = executeQueryResult(
+            "SELECT DossierId FROM Dossiers WHERE Resultaat LIKE ?", [keyword])
 
-    return jsonify(list(result))
+        results = []
+
+        for id in ids:
+            results.append(get_dossier(id.get("DossierId")))
+        results = jsonify(results)
+
+        return results
 
 
 if __name__ == "__main__":
