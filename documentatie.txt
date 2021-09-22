@@ -3,6 +3,7 @@
 !!!AUTH!!!
 GET /search 
 allemaal optioneel maar er moet er wel eentje zijn, mogen er meer zijn.
+- z (ziekte)
 - b (behandeling)
 - m (medicatie)
 - k (klacht (array))

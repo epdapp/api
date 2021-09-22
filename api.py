@@ -349,34 +349,15 @@ def get_dossier_str(dossierId):
 @requires_auth
 def get_all_dosssiers():
     ids = executeQueryResult('SELECT dossierid FROM dossiers ORDER BY DossierId desc', [])
-    # return jsonify(ids)
+
     print(ids[0].get('DossierId'))
 
     results = []
+
     for id in ids:
         results.append(get_dossier(id.get('DossierId')))
     results = jsonify(results)
-    results.headers["Content-Type"] = "application/json; charset=utf-8"
-    results.headers["Access-Control-Allow-Origin"] = "*"
-    results.headers["Access-Control-Allow-Credentials"] = "true"
-    results.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
-    results.headers["Access-Control-Allow-Headers"] = "Acces-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Acces-Control-Request-Headers"
-    # results.setHeader("Access-Control-Allow-Origin", "*")
-    # results.setHeader("Access-Control-Allow-Credentials", "true")
-    # results.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT")
-    # results.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers")
     return results
-    # r = Response(response=results, status=200, mimetype="application/json")
-    # r.headers["Content-Type"] = "application/json; charset=utf-8"
-    # return r
-    # cur.execute('''SELECT * FROM dossiers''')
-    # row_headers = [x[0]
-    # 				for x in cur.description]  # this will extract row headers
-    # json_data = []
-    # myresult = cur.fetchall()
-    # for result in myresult:
-    # 	json_data.append(dict(zip(row_headers, result)))
-    # return jsonify(json_data)
 
 
 @ app.route('/dossiers/del/<dossierId>', methods=['DELETE'])
@@ -405,11 +386,15 @@ def search():
     if (ziekte):
         keyword = f"%{ziekte}%"
 
-        searchResults = executeQueryResult(
+        ids = executeQueryResult(
             "SELECT dossierId FROM dossiers WHERE ziekte LIKE ?;", [keyword])
 
-        for searchResult in searchResults:
-            result.add(searchResult.get('DossierId'))
+        results =[]
+
+        for id in ids:
+            results.append(get_dossier(id.get("DossierId")))
+        results = jsonify(results)
+        return results
 
     if (behandeling):
         keywords = behandeling.split()
