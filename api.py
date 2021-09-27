@@ -278,10 +278,11 @@ def new_dossier():
     age = dossier_data.get('l', None)
     result = dossier_data.get('r', None)
     sex = dossier_data.get('g', None)
+    created = dossier_data.get('a', None)
 
     # create the dossier record
-    dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling) VALUES (?, ?, ?, ?, ?);", [
-        desease, sex, age, result, treatment])
+    dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling, Aangemaakt) VALUES (?, ?, ?, ?, ?, ?);", [
+        desease, sex, age, result, treatment, created])
 
     # create the medication rows
     for medication in medications:
@@ -381,6 +382,7 @@ def search():
     geslacht = request.args.get('g')
     leeftijd = request.args.get('l')
     resultaat = request.args.get('r')
+    aangemaakt = request.args.get('a')
 
     result = set()
 
@@ -488,6 +490,19 @@ def search():
             results.append(get_dossier(id.get("DossierId")))
         results = jsonify(results)
 
+        return results
+
+    if (aangemaakt):
+        keyword = f"%{aangemaakt}%"
+
+        ids = executeQueryResult(
+            "SELECT dossierId FROM dossiers WHERE aangemaakt LIKE ?;", [keyword])
+
+        results = []
+
+        for id in ids:
+            results.append(get_dossier(id.get("DossierId")))
+        results = jsonify(results)
         return results
 
 
