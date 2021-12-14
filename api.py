@@ -1,3 +1,5 @@
+
+from sqlite3.dbapi2 import IntegrityError
 from types import MethodDescriptorType
 from dotenv import load_dotenv
 from typing import Dict
@@ -8,6 +10,9 @@ import os
 from datetime import timedelta
 import sqlite3
 import base64
+
+
+from werkzeug.datastructures import CharsetAccept, Headers
 from auth_decorator import login_required
 import flask_cors
 from flask_cors import cross_origin
@@ -212,6 +217,12 @@ def executeQueryId(query, to_filter):
         con.commit()
     return id
 
+def executeQuery(query, to_filter):
+    with sqlite3.connect(DATABASE) as con:
+        cur = con.cursor()
+        cur.execute(query, to_filter)
+        con.commit()
+    return
 
 def executeQueryResult(query, to_filter):
     result = []
@@ -263,6 +274,38 @@ def loggedin():
     return render_template("open.html", href=f'epdapp:?{base64.b64encode(login.encode()).decode()}')
     # return "Hello"
 
+# post dossier
+
+@ app.route('/users/', methods=['POST'])
+@cross_origin(headers=["Content-type", "Authorization"])
+@requires_auth
+def post_user():
+    user_data = request.get_json()
+    
+    UserId = user_data.get('userId', None)
+    Naam = user_data.get('name', None)
+    Email = user_data.get('email', None)
+    ProfielFoto = user_data.get('profilePicture', None)
+
+    try:
+        newUser = executeQuery("INSERT INTO Users (UserId, Naam, Email, ProfielFoto) VALUES (?, ?, ?, ?);", [UserId, Naam, Email, ProfielFoto])
+        return str(newUser)
+    except(IntegrityError):
+        return jsonify({"error": "gebruiker bestaat al"})
+
+@ app.route("/savedossier/", methods=["PUT"])
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
+def saveDossier():
+    dossier_data = request.get_json()
+    dossierId = dossier_data.get('dossierId', None) 
+    userId = dossier_data.get('userId', None)
+
+    try:
+        saveNewDossier = executeQuery("UPDATE Users SET StoredDossier = ? WHERE UserId = ?", [dossierId, userId])
+        return str(saveNewDossier)
+    except(IntegrityError):
+        return jsonify({"error": "dossier is al opgeslagen"})
 
 @ app.route('/dossiers/', methods=['POST'])
 # @login_required
@@ -281,17 +324,17 @@ def new_dossier():
     created = dossier_data.get('a', None)
 
     # create the dossier record
-    dossierId = executeQueryId("INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling, Aangemaakt) VALUES (?, ?, ?, ?, ?, ?);", [
+    dossierId = executeQueryId(u"INSERT INTO Dossiers (Ziekte, Geslacht, Leeftijd, Resultaat, Behandeling, Aangemaakt) VALUES (?, ?, ?, ?, ?, ?);", [
         desease, sex, age, result, treatment, created])
 
     # create the medication rows
     for medication in medications:
-        executeQueryId("INSERT INTO MedicatieRegel (DossierId, Medicatie) VALUES (?, ?)", [
+        executeQueryId(u"INSERT INTO MedicatieRegel (DossierId, Medicatie) VALUES (?, ?)", [
                        dossierId, medication])
 
     # creat the complaints rows
     for complaint in complaints:
-        executeQueryId("INSERT INTO KlachtRegel (DossierId, Klacht) VALUES (?, ?)", [
+        executeQueryId(u"INSERT INTO KlachtRegel (DossierId, Klacht) VALUES (?, ?)", [
                        dossierId, complaint])
 
     return str(dossierId)
@@ -390,7 +433,7 @@ def search():
         keyword = f"%{ziekte}%"
 
         ids = executeQueryResult(
-            "SELECT dossierId FROM dossiers WHERE ziekte LIKE ?;", [keyword])
+            u"SELECT dossierId FROM dossiers WHERE ziekte LIKE ?;", [keyword])
 
         results = []
 
@@ -406,7 +449,7 @@ def search():
             keyword = f"%{keyword}%"
 
             ids = executeQueryResult(
-                "SELECT dossierid FROM dossiers WHERE behandeling LIKE ?;", [keyword])
+                u"SELECT dossierid FROM dossiers WHERE behandeling LIKE ?;", [keyword])
 
             results = []
 
@@ -424,7 +467,7 @@ def search():
         for keyword in keywords:
 
             ids = executeQueryResult(
-                "SELECT DossierId FROM MedicatieRegel WHERE Medicatie LIKE ?", [keyword])
+                u"SELECT DossierId FROM MedicatieRegel WHERE Medicatie LIKE ?", [keyword])
 
             results = []
 
@@ -440,7 +483,7 @@ def search():
         for keyword in keywords:
 
             ids = executeQueryResult(
-                "SELECT DossierId FROM KlachtRegel WHERE Klacht LIKE ?", [keyword])
+                u"SELECT DossierId FROM KlachtRegel WHERE Klacht LIKE ?", [keyword])
 
             results = []
 
@@ -453,7 +496,7 @@ def search():
     if (geslacht):
 
         ids = executeQueryResult(
-            "SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [geslacht])
+            u"SELECT DossierId FROM Dossiers WHERE Geslacht = ?", [geslacht])
 
         results = []
 
@@ -465,7 +508,7 @@ def search():
 
     if (leeftijd):
         ids = executeQueryResult(
-            "SELECT DossierId FROM Dossiers WHERE leeftijd = ?", [leeftijd])
+            u"SELECT DossierId FROM Dossiers WHERE leeftijd = ?", [leeftijd])
 
         results = []
 
@@ -482,7 +525,7 @@ def search():
             keyword = f"%{keyword}%"
 
         ids = executeQueryResult(
-            "SELECT DossierId FROM Dossiers WHERE Resultaat LIKE ?", [keyword])
+            u"SELECT DossierId FROM Dossiers WHERE Resultaat LIKE ?", [keyword])
 
         results = []
 
@@ -496,7 +539,7 @@ def search():
         keyword = f"%{aangemaakt}%"
 
         ids = executeQueryResult(
-            "SELECT dossierId FROM dossiers WHERE aangemaakt LIKE ?;", [keyword])
+            u"SELECT dossierId FROM dossiers WHERE aangemaakt LIKE ?;", [keyword])
 
         results = []
 
