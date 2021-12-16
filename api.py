@@ -293,19 +293,31 @@ def post_user():
     except(IntegrityError):
         return jsonify({"error": "gebruiker bestaat al"})
 
-@ app.route("/savedossier/", methods=["PUT"])
+@ app.route("/saveddossiers/", methods=["PUT"])
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def saveDossier():
     dossier_data = request.get_json()
-    dossierId = dossier_data.get('dossierId', None) 
+    prestoredDossiers = set(map(int, dossier_data.get('dossierId', None).split(', ')))
     userId = dossier_data.get('userId', None)
 
+
+    prestoredDossiers = str(prestoredDossiers)[1:-1]
+  
+    print(prestoredDossiers)
+
     try:
-        saveNewDossier = executeQuery("UPDATE Users SET StoredDossier = ? WHERE UserId = ?", [dossierId, userId])
+        saveNewDossier = executeQuery("UPDATE Users SET StoredDossier = ? WHERE UserId = ?", [prestoredDossiers, userId])
         return str(saveNewDossier)
     except(IntegrityError):
         return jsonify({"error": "dossier is al opgeslagen"})
+
+@ app.route("/get-saveddossiers/<UserId>")
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
+def getSavedDossiers(UserId):
+    savedDossiers = executeQueryResult("SELECT StoredDossier FROM Users WHERE UserId=?", [UserId])
+    return jsonify(savedDossiers)
 
 @ app.route('/dossiers/', methods=['POST'])
 # @login_required
@@ -547,7 +559,6 @@ def search():
             results.append(get_dossier(id.get("DossierId")))
         results = jsonify(results)
         return results
-
 
 if __name__ == "__main__":
     app.run()
