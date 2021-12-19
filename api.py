@@ -311,12 +311,14 @@ def saveDossier():
     except(IntegrityError):
         return jsonify({"error": "dossier is al opgeslagen"})
 
-@ app.route("/get-saveddossiers/<UserId>")
+
+@ app.route("/get-saveddossiers/<UserId>", methods=["GET"])
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def getSavedDossiers(UserId):
     savedDossiers = executeQueryResult("SELECT StoredDossier FROM Users WHERE UserId=?", [UserId])
     return jsonify(savedDossiers)
+
 
 @ app.route('/dossiers/', methods=['POST'])
 # @login_required
