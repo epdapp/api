@@ -319,6 +319,46 @@ def getSavedDossiers(UserId):
     savedDossiers = executeQueryResult("SELECT StoredDossier FROM Users WHERE UserId=?", [UserId])
     return jsonify(savedDossiers)
 
+# @ app.route('/del-saved-dossier/<userId>', methods=['GET'])
+# # @cross_origin(headers=["Content-Type", "Authorization"])
+# # @requires_auth
+# def delSavedDossiers(userId):
+#     # data = request.get_json()
+
+#     # userId = data.get('userId', None)
+#     # dossierId = data.get('dossierId', None)
+
+#     savedDossiers = executeQueryResult("SELECT StoredDossier FROM Users WHERE UserId=?", [userId]) 
+
+#     string = ""
+
+#     for i in str(savedDossiers):
+#         string = string + i
+    
+#     string.split("'")[2]
+
+#     print(string)
+
+#     return jsonify(savedDossiers)
+
+@ app.route('/del-saved-dossier', methods=["PUT"])
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
+def delSavedDos():
+
+    data = request.get_json()
+    userId = data.get('userId')
+    newDossierString = data.get('dosString')
+    
+    try:
+        newSaved = executeQueryResult("UPDATE Users SET StoredDossier =? WHERE UserId = ?", [newDossierString, userId])
+        return str(newSaved)
+    except(IntegrityError):
+        return jsonify({"error": "Dit dossier was nooit opgeslagen"})
+
+
+
+
 
 @ app.route('/dossiers/', methods=['POST'])
 # @login_required
