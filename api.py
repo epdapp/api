@@ -319,27 +319,6 @@ def getSavedDossiers(UserId):
     savedDossiers = executeQueryResult("SELECT StoredDossier FROM Users WHERE UserId=?", [UserId])
     return jsonify(savedDossiers)
 
-# @ app.route('/del-saved-dossier/<userId>', methods=['GET'])
-# # @cross_origin(headers=["Content-Type", "Authorization"])
-# # @requires_auth
-# def delSavedDossiers(userId):
-#     # data = request.get_json()
-
-#     # userId = data.get('userId', None)
-#     # dossierId = data.get('dossierId', None)
-
-#     savedDossiers = executeQueryResult("SELECT StoredDossier FROM Users WHERE UserId=?", [userId]) 
-
-#     string = ""
-
-#     for i in str(savedDossiers):
-#         string = string + i
-    
-#     string.split("'")[2]
-
-#     print(string)
-
-#     return jsonify(savedDossiers)
 
 @ app.route('/del-saved-dossier', methods=["PUT"])
 @cross_origin(headers=["Content-Type", "Authorization"])
@@ -356,12 +335,7 @@ def delSavedDos():
     except(IntegrityError):
         return jsonify({"error": "Dit dossier was nooit opgeslagen"})
 
-
-
-
-
 @ app.route('/dossiers/', methods=['POST'])
-# @login_required
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def new_dossier():
@@ -430,7 +404,6 @@ def del_dossier(dossierId):
 
 
 @ app.route('/dossiers/<dossierId>', methods=['GET'])
-# @login_required
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def get_dossier_str(dossierId):
@@ -441,7 +414,6 @@ def get_dossier_str(dossierId):
 
 
 @ app.route('/dossiers/all', methods=['GET'])
-# @login_required
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def get_all_dosssiers():
@@ -467,7 +439,6 @@ def del_dossier_called(dossierId):
 
 
 @ app.route('/dossiers/search', methods=['GET'])
-# @login_required
 @cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def search():
@@ -601,5 +572,23 @@ def search():
         results = jsonify(results)
         return results
 
+@ app.route('/profilepicture/<userId>', methods=['GET'])
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
+def getPicture(userId):
+    picture = executeQueryResult('SELECT profielFoto FROM Users WHERE UserId = ?', [userId])
+    return jsonify(picture)
+
+@ app.route('/profilepicture', methods=['PUT'])
+@cross_origin(headers=["Content-Type", "Authorization"])
+@requires_auth
+def updateProfilePicture():
+    data = request.get_json()
+    userId = data.get('userId', None)
+    newProfilePicture = data.get('picUrl', None)
+
+    executeQueryResult("UPDATE Users SET ProfielFoto = ? WHERE UserId = ?", [newProfilePicture, userId])
+    return 
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
