@@ -588,7 +588,7 @@ def updateProfilePicture():
     newProfilePicture = data.get('picUrl', None)
 
     executeQueryResult("UPDATE Users SET ProfielFoto = ? WHERE UserId = ?", [newProfilePicture, userId])
-    return 
+    return flask.Response(status=200)
 
 if __name__ == "__main__":
     app.run(debug=True)
