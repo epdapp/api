@@ -298,11 +298,17 @@ def post_user():
 @requires_auth
 def saveDossier():
     dossier_data = request.get_json()
-    prestoredDossiers = set(map(int, str(dossier_data.get('dossierId', None)).split(', ')))
-    userId = dossier_data.get('userId', None)
+    prestoredDossiers = dossier_data.get('dossierId', None)
 
-    prestoredDossiers = str(prestoredDossiers)[1:-1]
-  
+    if type(prestoredDossiers) is str:
+        prestoredDossiers = prestoredDossiers
+    else:
+        prestoredDossiers = set(map(int, str(dossier_data.get('dossierId', None)).split(', ')))
+        
+
+        prestoredDossiers = str(prestoredDossiers)[1:-1]
+        
+    userId = dossier_data.get('userId', None)
     print(prestoredDossiers)
 
     try:
