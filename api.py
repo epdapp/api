@@ -13,7 +13,6 @@ from datetime import timedelta
 import sqlite3
 import base64
 from werkzeug.datastructures import CharsetAccept, Headers
-from auth_decorator import login_required
 import flask_cors
 from flask_cors import cross_origin
 import json
